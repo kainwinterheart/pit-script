@@ -16,7 +16,7 @@ How to run example
 Syntax
 ------
 
-### String defenition
+### String definition
 
 	"some string"
 
