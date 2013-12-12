@@ -1,0 +1,15 @@
+
+plan( let $tests = 2; );
+
+open( let $url = "https://www.drweb.com/" );
+
+submit_form(
+	let $spec = hash (
+		"with_fields" => hash (
+			"text" => "something"
+		)
+	);
+
+	let $descr = "site search form";
+);
+
