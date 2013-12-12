@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
+use utf8;
 
 BEGIN
 {
@@ -19,6 +20,29 @@ use WWW::Mechanize ();
 use Test::More ();
 
 use Scalar::Util 'blessed';
+
+use Encode ( 'is_utf8', 'decode', 'encode' );
+
+sub du
+{
+	my $s = shift;
+
+	return ( is_utf8( $s ) ? $s : decode( 'UTF-8', $s ) );
+}
+
+sub eu
+{
+	my $s = shift;
+
+	my $rv = is_utf8( $s ) ? encode( 'UTF-8', $s ) : $s;
+
+	if( is_utf8( $rv ) )
+	{
+		utf8::downgrade( $rv );
+	}
+
+	return $rv;
+}
 
 sub mech
 {
@@ -577,6 +601,34 @@ sub submit_form
 		);
 
 		&Test::More::ok( $o -> success(), sprintf( 'form is submitted: %s', $desc ) );
+
+		return pit::type::undef -> new( \( my $dummy = undef ) );
+	} );
+}
+
+sub content_like
+{
+	return pit::code::block::builtin -> new( \sub
+	{
+		my $o = &pit::internals::mech();
+
+		my $re = &pit::internals::du( $_[ 1 ] -> get( pit::var -> new( \(my $dummy = '$re' ) ) ) -> val() -> cast_string() -> val() );
+
+		&Test::More::like( &pit::internals::du( $o -> content() ), qr/$re/, sprintf( 'content like: %s', &pit::internals::eu( $re ) ) );
+
+		return pit::type::undef -> new( \( my $dummy = undef ) );
+	} );
+}
+
+sub content_ilike
+{
+	return pit::code::block::builtin -> new( \sub
+	{
+		my $o = &pit::internals::mech();
+
+		my $re = &pit::internals::du( $_[ 1 ] -> get( pit::var -> new( \(my $dummy = '$re' ) ) ) -> val() -> cast_string() -> val() );
+
+		&Test::More::like( &pit::internals::du( $o -> content() ), qr/$re/i, sprintf( 'content ilike: %s', &pit::internals::eu( $re ) ) );
 
 		return pit::type::undef -> new( \( my $dummy = undef ) );
 	} );
