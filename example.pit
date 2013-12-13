@@ -1,7 +1,7 @@
 
 plan( let $tests = 3; );
 
-open( let $url = "https://www.drweb.com/?lng=en" );
+open( let $url = "http://www.drweb.com/?lng=en" );
 
 submit_form(
 	let $spec = hash (
@@ -14,4 +14,17 @@ submit_form(
 );
 
 content_like( let $re = "search" );
+
+let $glob = "glob";
+(
+(
+let $var = lambda( print( let $str = $in + E( let $str = "\n" ) ); Dump( let $name = "$glob"; let $val = outer( $name ) ) );
+
+(
+Dump( let $val = $var );
+
+$var.call( let $in = "stuff" );
+);
+);
+);
 

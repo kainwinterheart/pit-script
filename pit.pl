@@ -799,6 +799,36 @@ sub op_assign
 	return $_[ 0 ] -> set_val( $_[ 1 ] );
 }
 
+package pit::lambda;
+
+use base 'pit::type';
+
+use Scalar::Util 'blessed';
+
+sub new
+{
+	return $_[ 0 ] -> SUPER::new( { code => ( $_[ 1 ] || sub{} ) } );
+}
+
+sub public
+{
+	return [
+		'call'
+	];
+}
+
+sub val
+{
+	return shift -> { 'code' };
+}
+
+sub call
+{
+	my ( $self, $context ) = @_;
+
+	return $self -> val() -> ( $context );
+}
+
 package pit::hash;
 
 use base 'pit::type';
@@ -1092,6 +1122,56 @@ sub exec
 	}
 
 	die 'Cannot add to context: ' . $var;
+}
+
+package pit::decl::lambda;
+
+use base 'pit::decl';
+
+sub new
+{
+	my $val = $_[ 0 ] -> SUPER::new( $_[ 1 ] );
+
+#	use Data::Dumper 'Dumper';
+#	print Dumper( $val ) . "\n";
+
+	return $val;
+}
+
+sub exec
+{
+	my $pos     = $_[ 1 ];
+	my $tokens  = $_[ 2 ];
+	my $context = $_[ 3 ];
+
+	my $var = $tokens -> [ $pos + 1 ];
+
+	if( $var -> isa( 'pit::link' ) )
+	{
+		my $ovar = $var;
+		$var = $var -> val();
+		$ovar -> relink( \sub{ return $tokens -> [ $pos ] } );
+	}
+
+	if( $var -> isa( 'pit::code::block' ) )
+	{
+		$tokens -> [ $pos + 1 ] = pit::link -> new( \sub{ return $tokens -> [ $pos ] } ) unless $tokens -> [ $pos + 1 ] -> isa( 'pit::link' );
+
+		my $outer_def = pit::code::block::custom -> new( 'outer', \sub{ $context -> get( $_[ 1 ] -> get( pit::var -> new( \(my $dummy = '$name' ) ) ) ) -> val() } );
+
+		my $o = pit::lambda -> new( sub
+		{
+			my $local_context = pit::context -> new( shift );
+
+			$local_context -> add( $outer_def );
+
+			return $var -> exec( $local_context, 1 );
+		} );
+
+		return $tokens -> [ $pos ] = pit::link -> new( \sub{ $o } );
+	}
+
+	die 'Cannot initialize array: ' . $var;
 }
 
 package pit::decl::hash;
@@ -1648,6 +1728,16 @@ my %table  = (
 		}
 	},
 	var          => qr/^\$[a-z_][a-z0-9_]*(?!(\s))$/i,
+	decl_lambda  => {
+		from_re       => qr/^lambda(?=((\s|\()$))/,
+		to_re         => qr/^lambda(?=((\s|\()$))/,
+		after         => sub
+		{
+			my ( $word, $chars ) = @_;
+
+			unshift @$chars, chop $word;
+		}
+	},
 	decl_hash    => {
 		from_re       => qr/^hash(?=((\s|\()$))/,
 		to_re         => qr/^hash(?=((\s|\()$))/,
