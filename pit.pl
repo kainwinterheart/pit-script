@@ -797,6 +797,24 @@ sub plan
 	} );
 }
 
+sub subtest
+{
+	return pit::code::block::builtin -> new( \sub
+	{
+		my $o = &pit::internals::mech();
+
+		my $ctx = $_[ 1 ];
+		my $name = $ctx -> get( pit::var -> new( \(my $dummy = '$name' ) ) ) -> val() -> cast_string() -> val();
+		my $lambda = $ctx -> get( pit::var -> new( \(my $dummy = '$code' ) ) ) -> val();
+
+		die '$code should be a lambda' unless $lambda -> isa( 'pit::lambda' );
+
+		&Test::More::subtest( $name => sub{ $lambda -> call( $ctx ) } );
+
+		return pit::type::undef -> new( \( my $dummy = undef ) );
+	} );
+}
+
 sub submit_form
 {
 	return pit::code::block::builtin -> new( \sub
@@ -906,7 +924,7 @@ sub exec
 # print &Data::Dumper::Dumper( $context );
 		$var -> exec( $context, ( $var -> isa( 'pit::code::block' ) ? 1 : () ) );
 # die &Data::Dumper::Dumper( $context );
-		$context -> localize();
+#		$context -> localize();
 # print &Data::Dumper::Dumper( $context );
 
 		my $result = $body -> exec( $context );
@@ -1396,13 +1414,13 @@ sub exec
 
 		$tokens -> [ $pos + 1 ] = pit::link -> new( \sub{ return $tokens -> [ $pos ] } ) unless $tokens -> [ $pos + 1 ] -> isa( 'pit::link' );
 
-		my $outer_def = pit::code::block::custom -> new( 'outer', \sub{ $context -> get( pit::var -> new( \( $_[ 1 ] -> get( pit::var -> new( \(my $dummy = '$name' ) ) ) -> val() -> cast_string() -> val() ) ) ) -> val() } );
+#		my $outer_def = pit::code::block::custom -> new( 'outer', \sub{ $context -> get( pit::var -> new( \( $_[ 1 ] -> get( pit::var -> new( \(my $dummy = '$name' ) ) ) -> val() -> cast_string() -> val() ) ) ) -> val() } );
 
 		my $o = pit::lambda -> new( sub
 		{
 			my $local_context = pit::context -> new( shift @_ );
 
-			$local_context -> add( $outer_def );
+#			$local_context -> add( $outer_def );
 
 # use Data::Dumper 'Dumper';
 # print Dumper( $var ), "\n";
