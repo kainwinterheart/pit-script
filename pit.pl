@@ -2145,9 +2145,9 @@ while( defined( my $first_char = shift @chars ) )
 	}
 }
 
-print '-'x37 . 'input:' . '-'x37 . "\n";
-print $string . "\n";
-print '-'x36 . 'output:' . '-'x37 . "\n";
+# print '-'x37 . 'input:' . '-'x37 . "\n";
+# print $string . "\n";
+# print '-'x36 . 'output:' . '-'x37 . "\n";
 
 my @phrases = ();
 {
