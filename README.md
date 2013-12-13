@@ -51,6 +51,12 @@ Syntax
 		"this string will be returned to caller"
 	);
 
+### Lambda definition
+
+	lambda (
+		"some function body";
+	);
+
 ### Function arguments
 
 	defun function_with_args
@@ -83,6 +89,14 @@ Syntax
 	let $array_with_values = $var.values();
 	let $bool = $var.exists( let $key = "some key" );
 	let $value_for_removed_key = $val.delete( "key" );
+
+### Lambda methods
+
+	let $var = lambda (
+		print( let $str = $in );
+	);
+
+	$var.call( let $in = "some string" );
 
 ### Builtin functions
 

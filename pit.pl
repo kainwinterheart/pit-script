@@ -193,9 +193,27 @@ sub get
 	die 'Unexistent entity: ' . $_[ 1 ] -> name();
 }
 
+sub vars
+{
+	return map{ pit::var -> new( \$_ ) } keys %{ $_[ 0 ] -> { 'data' } };
+}
+
 sub localize
 {
-	$_[ 0 ] -> { 'parent' } = undef;
+	my $self = shift;
+
+	if( defined( my $parent = $self -> { 'parent' } ) )
+	{
+		$self -> { 'parent' } = undef;
+
+		foreach my $name ( $parent -> vars() )
+		{
+			unless( $self -> has( $name ) )
+			{
+				$self -> add( $parent -> get( $name ) );
+			}
+		}
+	}
 
 	return 1;
 }
@@ -1157,7 +1175,7 @@ sub exec
 	{
 		$tokens -> [ $pos + 1 ] = pit::link -> new( \sub{ return $tokens -> [ $pos ] } ) unless $tokens -> [ $pos + 1 ] -> isa( 'pit::link' );
 
-		my $outer_def = pit::code::block::custom -> new( 'outer', \sub{ $context -> get( $_[ 1 ] -> get( pit::var -> new( \(my $dummy = '$name' ) ) ) ) -> val() } );
+		my $outer_def = pit::code::block::custom -> new( 'outer', \sub{ $context -> get( pit::var -> new( \( $_[ 1 ] -> get( pit::var -> new( \(my $dummy = '$name' ) ) ) -> val() -> cast_string() -> val() ) ) ) -> val() } );
 
 		my $o = pit::lambda -> new( sub
 		{
