@@ -23,6 +23,8 @@ use Scalar::Util 'blessed';
 
 use Encode ( 'is_utf8', 'decode', 'encode' );
 
+use URI ();
+
 sub du
 {
 	my $s = shift;
@@ -88,7 +90,7 @@ sub convert_pit_hash_to_native_perl
 
 	foreach my $key ( keys %{ $in -> val() } )
 	{
-		$out{ $key } = &pit::internals::convert_pit_object_to_native_perl( $in -> { $key } );
+		$out{ $key } = &pit::internals::convert_pit_object_to_native_perl( ${ $in -> { 'hash' } -> { $key } } );
 	}
 
 	return \%out;
@@ -102,7 +104,7 @@ sub convert_pit_array_to_native_perl
 
 	for( my $i = 0; $i < $cnt; ++$i )
 	{
-		$out[ $i ] = &pit::internals::convert_pit_object_to_native_perl( $in -> [ $i ] );
+		$out[ $i ] = &pit::internals::convert_pit_object_to_native_perl( ${ $in -> [ $i ] } );
 	}
 
 	return \@out;
@@ -739,6 +741,30 @@ sub open
 
 		my $u = $_[ 1 ] -> get( pit::var -> new( \(my $dummy = '$url' ) ) ) -> val() -> cast_string() -> val();
 
+		my $params_name = pit::var -> new( \(my $dummy = '$params' ) );
+
+		if( $_[ 1 ] -> has( $params_name ) )
+		{
+			my $params = $_[ 1 ] -> get( $params_name ) -> val();
+
+			die '$params should be a hash' unless $params -> isa( 'pit::hash' );
+
+			my $uri = URI -> new( $u );
+
+			my %params = $uri -> query_form();
+
+			$params = &pit::internals::convert_pit_object_to_native_perl( $params );
+
+			foreach my $key ( keys %$params )
+			{
+				$params{ $key } = $params -> { $key };
+			}
+
+			$uri -> query_form( %params );
+
+			$u = $uri -> as_string();
+		}
+
 		$o -> get( $u );
 
 		&Test::More::ok( $o -> success(), sprintf( 'get: %s', $u ) );
@@ -772,9 +798,9 @@ sub submit_form
 
 		die '$spec should be a hash' unless $spec -> isa( 'pit::hash' );
 
-		$o -> submit_form(
-			%{ &pit::internals::convert_pit_object_to_native_perl( $spec ) }
-		);
+		my $h = &pit::internals::convert_pit_object_to_native_perl( $spec );
+
+		$o -> submit_form( %$h );
 
 		&Test::More::ok( $o -> success(), sprintf( 'form is submitted: %s', $desc ) );
 

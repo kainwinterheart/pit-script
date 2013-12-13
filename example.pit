@@ -1,12 +1,12 @@
 
 plan( let $tests = 3; );
 
-open( let $url = "http://www.drweb.com/?lng=en" );
+open( let $url = "http://www.drweb.com/"; let $params = hash ( "lng" => "en"; ); );
 
 submit_form(
 	let $spec = hash (
 		"with_fields" => hash (
-			"text" => "something"
+			"q" => "something"
 		)
 	);
 
