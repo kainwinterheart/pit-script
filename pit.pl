@@ -64,6 +64,16 @@ sub convert_pit_object_to_native_perl
 
 	if( blessed $o )
 	{
+		if( $o -> isa( 'pit::link' ) )
+		{
+			$o = $o -> val();
+		}
+
+		if( $o -> isa( 'pit::var' ) )
+		{
+			$o = $o -> val();
+		}
+
 		if( $o -> isa( 'pit::hash' ) )
 		{
 			return &pit::internals::convert_pit_hash_to_native_perl( $o );
@@ -98,7 +108,7 @@ sub convert_pit_hash_to_native_perl
 
 sub convert_pit_array_to_native_perl
 {
-	my $in = shift;
+	my $in = shift -> val();
 	my @out = ();
 	my $cnt = scalar( @$in );
 
