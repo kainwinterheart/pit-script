@@ -67,6 +67,14 @@ Syntax
 
 	function_with_args( let $some_arg = "some string" );
 
+### String methods
+
+	let $var = "some string";
+
+	$var.split( let $re = "\s+" )
+
+	"some string".split( let $re = "\s+" )
+
 ### Number methods
 
 	let $var = 3;

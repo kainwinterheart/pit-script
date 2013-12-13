@@ -1789,6 +1789,28 @@ package pit::type::string;
 
 use base 'pit::type';
 
+sub public
+{
+	return [
+		'split'
+	];
+}
+
+sub split
+{
+	my ( $self, $context ) = @_;
+
+	my $re = &pit::internals::du( $_[ 1 ] -> get( pit::var -> new( \(my $dummy = '$re' ) ) ) -> val() -> cast_string() -> val() );
+
+	my @list = map{
+
+		\( my $dummy2 = pit::type::string -> new( \( my $dummy = &pit::internals::eu( $_ ) ) ) )
+
+	} split( /$re/, &pit::internals::du( $self -> val() ) );
+
+	return pit::array -> new( \@list );
+}
+
 sub cast_string
 {
 	return shift;
