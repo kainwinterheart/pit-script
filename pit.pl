@@ -15,6 +15,14 @@ BEGIN
 
 package pit::internals;
 
+BEGIN
+{
+	require Data::Dumper;
+
+	$Data::Dumper::Terse = 1;
+	$Data::Dumper::Deparse = 1;
+};
+
 use WWW::Mechanize ();
 
 use Test::More ();
@@ -1242,14 +1250,14 @@ sub unshift
 
 sub size
 {
-	return scalar( @{ $_[ 0 ] -> { 'list' } } );
+	return pit::type::num -> new( \( my $dummy = scalar( @{ $_[ 0 ] -> { 'list' } } ) ) );
 }
 
 sub shift
 {
 	my $self = shift;
 
-	if( $self -> size() > 0 )
+	if( scalar( @{ $self -> { 'list' } } ) > 0 )
 	{
 		return ${ CORE::shift @{ $self -> { 'list' } } };
 	}
@@ -1261,7 +1269,7 @@ sub pop
 {
 	my $self = shift;
 
-	if( $self -> size() > 0 )
+	if( scalar( @{ $self -> { 'list' } } ) > 0 )
 	{
 		return ${ CORE::pop @{ $self -> { 'list' } } };
 	}
@@ -1291,7 +1299,7 @@ sub get
 	die sprintf( 'unknown index: %s', $iidx ) unless $iidx -> isa( 'pit::type::num' );
 
 	my $idx_num = $iidx -> val();
-	my $size    = $self -> size();
+	my $size    = scalar( @{ $self -> { 'list' } } );
 
 	if(
 		(
