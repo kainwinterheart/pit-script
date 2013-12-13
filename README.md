@@ -67,6 +67,22 @@ Syntax
 
 	function_with_args( let $some_arg = "some string" );
 
+### Number methods
+
+	let $var = 3;
+
+	$var.times (
+		let $code = lambda (
+			print ( let $str = $element );
+		);
+	);
+
+	3.times (
+		let $code = lambda (
+			print ( let $str = $element );
+		);
+	);
+
 ### Array methods
 
 	let $var = array ( 1; 2; 3; );
@@ -78,6 +94,18 @@ Syntax
 	let $last_el = $var.pop(); # also removes last element from array
 	let $second_el = $var.get( let $idx = 1 );
 	let $new_value = $var.set( let $idx = 0; let $val = "some new value" );
+
+	$var.each (
+		let $code = lambda (
+			print ( let $str = $element );
+		);
+	);
+
+	array ( 1; 2; 3; ).each (
+		let $code = lambda (
+			print ( let $str = $element );
+		);
+	);
 
 ### Hash methods
 

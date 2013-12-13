@@ -108,6 +108,80 @@ sub convert_pit_array_to_native_perl
 	return \@out;
 }
 
+sub clone
+{
+	my ( $i, $limit ) = @_;
+
+	if( ++$limit > 10000 )
+	{
+		require Data::Dumper;
+
+		die Data::Dumper::Dumper( $i );
+	}
+
+	if( blessed $i )
+	{
+		if( $i -> isa( 'pit::object' ) )
+		{
+			return $i -> clone( $limit );
+		}
+
+		return $i;
+	}
+
+	if( ref( $i ) eq 'HASH' )
+	{
+		return &pit::internals::clone_hash( $i, $limit );
+	}
+
+	if( ref( $i ) eq 'ARRAY' )
+	{
+		return &pit::internals::clone_array( $i, $limit );
+	}
+
+	if( ref( $i ) eq 'SCALAR' )
+	{
+		return &pit::internals::clone_scalar( $i, $limit );
+	}
+
+	return $i;
+}
+
+sub clone_hash
+{
+	my ( $i, $limit ) = @_;
+	my %o = ();
+
+	foreach my $key ( %$i )
+	{
+		$o{ $key } = &pit::internals::clone( $i -> { $key }, $limit );
+	}
+
+	return \%o;
+}
+
+sub clone_array
+{
+	my ( $i, $limit ) = @_;
+	my @o = ();
+	my $c = scalar( @$i );
+
+	for( my $j = 0; $j < $c; ++$j )
+	{
+		$o[ $j ] = &pit::internals::clone( $i -> [ $j ], $limit );
+	}
+
+	return \@o;
+}
+
+sub clone_scalar
+{
+	my ( $i, $limit ) = @_;
+	my $o = &pit::internals::clone( $$i, $limit );
+
+	return \$o;
+}
+
 package pit::globalstate;
 
 my %storage = ();
@@ -126,9 +200,39 @@ sub set
 
 package pit::object;
 
+use Scalar::Util 'reftype';
+
 sub new
 {
 	return bless( $_[ 1 ], ( ref( $_[ 0 ] ) or $_[ 0 ] ) );
+}
+
+sub clone
+{
+	my ( $self, $limit ) = @_;
+	my $rt = reftype( $self );
+	my $new = undef;
+
+	if( $rt eq 'HASH' )
+	{
+		my %hash = %$self;
+
+		$new = &pit::internals::clone( \%hash, $limit );
+
+	} elsif( $rt eq 'ARRAY' )
+	{
+		my @array = @$self;
+
+		$new = &pit::internals::clone( \@array, $limit );
+
+	} else
+	{
+		my $value = $$self;
+
+		$new = &pit::internals::clone( \$value, $limit );
+	}
+
+	return bless( $new, ( ref( $self ) or $self ) );
 }
 
 sub public { [] }
@@ -397,9 +501,63 @@ sub exec
 #	return ( ( scalar( @output ) > 1 ) ? pit::code -> new( \\@output ) -> exec( $context ) : ( ( scalar( @output ) == 1 ) ? shift( @output ) : pop( @$tokens ) ) );
 }
 
+sub make_recompillable
+{
+	my $codes = shift -> val();
+	my @codes = ();
+
+	foreach my $token ( @$codes )
+	{
+		my $new_token = $token;
+
+		if( $new_token -> isa( 'pit::code' ) and not $new_token -> isa( 'pit::code::recompillable' ) )
+		{
+			$new_token = $new_token -> make_recompillable();
+		}
+
+		push @codes, $new_token;
+	}
+
+	return pit::code::recompillable -> new( \\@codes );
+}
+
+package pit::code::recompillable;
+
+use base 'pit::code';
+
+sub make_recompillable
+{
+	return shift;
+}
+
+sub exec
+{
+	my ( $self, @rest ) = @_;
+
+	my $tokens = &pit::internals::clone( $self -> val() );
+
+	return pit::code -> new( \$tokens ) -> exec( @rest );
+}
+
 package pit::code::block;
 
 use base 'pit::code';
+
+sub make_recompillable
+{
+	my $self  = shift;
+	my $codes = $self -> val();
+
+	foreach my $token ( @$codes )
+	{
+		if( $token -> isa( 'pit::code' ) and not $token -> isa( 'pit::code::recompillable' ) )
+		{
+			$token = $token -> make_recompillable();
+		}
+	}
+
+	return $self;
+}
 
 sub exec
 {
@@ -976,7 +1134,8 @@ sub public
 		'shift',
 		'pop',
 		'get',
-		'set'
+		'set',
+		'each'
 	];
 }
 
@@ -1097,6 +1256,30 @@ sub get
 	die sprintf( 'invalid index: %d', $idx_num );
 }
 
+sub each
+{
+	my ( $self, $context ) = @_;
+
+	my $ilambda = $context -> get( pit::var -> new( \(my $dummy = '$code' ) ) ) -> val();
+
+	die sprintf( 'unknown code: %s', $ilambda ) unless $ilambda -> isa( 'pit::lambda' );
+
+	my $local_context = pit::context -> new( $context );
+
+	foreach my $_el ( @{ $self -> { 'list' } } )
+	{
+		my $el = pit::var -> new( \( my $dummy = '$element' ) );
+
+		$el -> set_val( ${ $_el } );
+
+		$local_context -> add( $el );
+
+		$ilambda -> call( $local_context );
+	}
+
+	return;
+}
+
 package pit::decl;
 
 use base 'pit::object';
@@ -1173,15 +1356,20 @@ sub exec
 
 	if( $var -> isa( 'pit::code::block' ) )
 	{
+		$var -> make_recompillable();
+
 		$tokens -> [ $pos + 1 ] = pit::link -> new( \sub{ return $tokens -> [ $pos ] } ) unless $tokens -> [ $pos + 1 ] -> isa( 'pit::link' );
 
 		my $outer_def = pit::code::block::custom -> new( 'outer', \sub{ $context -> get( pit::var -> new( \( $_[ 1 ] -> get( pit::var -> new( \(my $dummy = '$name' ) ) ) -> val() -> cast_string() -> val() ) ) ) -> val() } );
 
 		my $o = pit::lambda -> new( sub
 		{
-			my $local_context = pit::context -> new( shift );
+			my $local_context = pit::context -> new( shift @_ );
 
 			$local_context -> add( $outer_def );
+
+# use Data::Dumper 'Dumper';
+# print Dumper( $var ), "\n";
 
 			return $var -> exec( $local_context, 1 );
 		} );
@@ -1338,6 +1526,8 @@ sub exec
 
 		unless( $var -> isa( 'pit::code::block::custom' ) )
 		{
+			$var -> make_recompillable();
+
 			$var = pit::code::block::custom -> new( $name -> name(), \sub{ shift; $code -> exec( @_ ) } );
 		}
 
@@ -1652,6 +1842,39 @@ package pit::type::num;
 
 use base 'pit::type';
 
+sub public
+{
+	return [
+		'times'
+	];
+}
+
+sub times
+{
+	my ( $self, $context ) = @_;
+
+	my $ilambda = $context -> get( pit::var -> new( \(my $dummy = '$code' ) ) ) -> val();
+
+	die sprintf( 'unknown code: %s', $ilambda ) unless $ilambda -> isa( 'pit::lambda' );
+
+	my $local_context = pit::context -> new( $context );
+
+	my $limit = abs( $self -> val() );
+
+	for( my $i = 0; $i < $limit; ++$i )
+	{
+		my $el = pit::var -> new( \( my $dummy = '$element' ) );
+
+		$el -> set_val( pit::type::num -> new( \( my $dummy = $i ) ) );
+
+		$local_context -> add( $el );
+
+		$ilambda -> call( $local_context );
+	}
+
+	return;
+}
+
 sub cast_num
 {
 	return shift;
@@ -1853,7 +2076,7 @@ print '-'x36 . 'output:' . '-'x37 . "\n";
 my @phrases = ();
 {
 @phrases = &make_phrases(\@tokens);
-use Data::Dumper 'Dumper';
+# use Data::Dumper 'Dumper';
 # print Dumper( \@phrases );
 sub make_phrases
 {
@@ -1887,7 +2110,7 @@ for( my $i = 0; $i < scalar( @$tokens ); ++$i )
 
 		if( $parens == 0 )
 		{
-		use Data::Dumper 'Dumper';
+#		use Data::Dumper 'Dumper';
 #		print Dumper( \@container );
 #		print Dumper( &make_phrases( \@container ) );
 		push @container, { separator => ';' };
@@ -1938,10 +2161,10 @@ return $pkg -> new( \\@output );
 }
 @tokens = ();
 
-use Data::Dumper 'Dumper';
+# use Data::Dumper 'Dumper';
 
-$Data::Dumper::Deparse = 1;
-$Data::Dumper::Terse   = 1;
+# $Data::Dumper::Deparse = 1;
+# $Data::Dumper::Terse   = 1;
 # $Data::Dumper::Indent  = 0;
 
 foreach my $phrase ( @phrases )

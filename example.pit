@@ -15,27 +15,3 @@ submit_form(
 
 content_like( let $re = "search" );
 
-# let $qwe = "asd";
-
-(
-	defun f1
-	(
-		$in.call( let $in = "zxc" );
-	);
-
-	let $qwe = "asd";
-
-	defun f2
-	(
-#		let $qwe = "asd";
-
-		let $l = lambda (
-			print( let $str = outer( let $name = "$qwe" ) + $in + E( let $str = "\n" ) );
-		);
-
-		f1( let $in = $l );
-	);
-
-	f2();
-);
-
