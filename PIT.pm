@@ -75,22 +75,27 @@ sub run_dir ($)
 
 	chomp $dir;
 
-	my @input = ( '' );
+	my @input = ( '.' );
 	my @files = ();
 
 	while( defined( my $subpath = shift @input ) )
 	{
-		chomp $subpath;
-
-		next if $subpath =~ m/^\./;
-
-		my $path = File::Spec -> catfile( $dir, ( $subpath or '.' ) );
+		my $path = File::Spec -> catfile( $dir, $subpath );
 
 		if( -d $path )
 		{
 			if( opendir( my $dh, $path ) )
 			{
-				push @input, readdir( $dh );
+				my @list = readdir( $dh );
+
+				while( defined( my $node = shift @list ) )
+				{
+					chomp $node;
+
+					next if $node =~ m/^\./;
+
+					push @input, File::Spec -> catfile( $subpath, $node );
+				}
 
 				closedir( $dh );
 			}
