@@ -6,11 +6,10 @@ Scripting language based on [Dorq](https://github.com/kainwinterheart/dorq-dsl) 
 Prerequisites
 -------------
 
-[URI](http://search.cpan.org/~gaas/URI-1.60/URI.pm)
-
-[Test::More](http://search.cpan.org/~rjbs/Test-Simple-1.001002/lib/Test/More.pm)
-
-[WWW::Mechanize](http://search.cpan.org/~ether/WWW-Mechanize-1.73/lib/WWW/Mechanize.pm)
++ perl
++ [URI](https://metacpan.org/release/URI)
++ [Test::More](https://metacpan.org/release/Test-More)
++ [WWW::Mechanize](https://metacpan.org/release/WWW-Mechanize)
 
 How to run example
 ------------------
