@@ -9,7 +9,7 @@ require Exporter;
 
 our @ISA = ( 'Exporter' );
 
-our @EXPORT = ( 'run', 'run_many', 'verbose' );
+our @EXPORT = ( 'run', 'run_many', 'verbose', 'run_dir' );
 
 our $VERSION = 0.01;
 
@@ -19,6 +19,8 @@ use PIT::All;
 use TAP::Harness ();
 
 use Test::More ();
+
+use File::Spec ();
 
 
 my $VERBOSE = 0;
@@ -65,6 +67,44 @@ sub run_many (@)
 		} )
 		-> runtests( @a )
 	;
+}
+
+sub run_dir ($)
+{
+	my $dir = shift;
+
+	chomp $dir;
+
+	my @input = ( '' );
+	my @files = ();
+
+	while( defined( my $subpath = shift @input ) )
+	{
+		chomp $subpath;
+
+		next if $subpath =~ m/^\./;
+
+		my $path = File::Spec -> catfile( $dir, ( $subpath or '.' ) );
+
+		if( -d $path )
+		{
+			if( opendir( my $dh, $path ) )
+			{
+				push @input, readdir( $dh );
+
+				closedir( $dh );
+			}
+
+		} elsif( -f $path )
+		{
+			if( $path =~ m/\.pit$/ )
+			{
+				push @files, $path;
+			}
+		}
+	}
+
+	return run_many @files;
 }
 
 -1;

@@ -8,6 +8,7 @@ Prerequisites
 
 + perl
 + [URI](https://metacpan.org/release/URI)
++ [File::Spec](https://metacpan.org/release/PathTools)
 + [Test::More](https://metacpan.org/release/Test-More)
 + [TAP::Harness](https://metacpan.org/release/Test-Harness)
 + [WWW::Mechanize](https://metacpan.org/release/WWW-Mechanize)
@@ -18,6 +19,7 @@ How to run tests
 	perl -Idorq-dsl -MPIT -e 'run "example.pit"'
 	perl -Idorq-dsl -MPIT -e 'run_many "example.pit", "other_file.pit"'
 	perl -Idorq-dsl -MPIT -e 'verbose; run_many "example.pit", "other_file.pit"'
+	perl -Idorq-dsl -MPIT -e 'run_dir "."'
 
 Syntax
 ------
