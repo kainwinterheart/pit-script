@@ -9,7 +9,7 @@ Prerequisites
 + perl
 + [URI](https://metacpan.org/release/URI)
 + [File::Spec](https://metacpan.org/release/PathTools)
-+ [Test::More](https://metacpan.org/release/Test-More)
++ [Test::More](https://metacpan.org/release/Test-Simple)
 + [TAP::Harness](https://metacpan.org/release/Test-Harness)
 + [WWW::Mechanize](https://metacpan.org/release/WWW-Mechanize)
 
