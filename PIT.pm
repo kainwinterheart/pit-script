@@ -37,32 +37,26 @@ sub run_many (@)
 
 	chomp $_ foreach @a;
 
+	my @cmd = (
+		$^X,
+		( map{ sprintf( '-I%s', $_ ) } @INC ),
+		'-MPIT',
+		'-e'
+	);
+
 	TAP::Harness
 		-> new( {
 			( $VERBOSE ? (
 				verbosity => $VERBOSE
 			) : () ),
-			# http://stackoverflow.com/questions/16584001/using-functions-in-tap-harness-instead-of-test-files
 			exec => sub
 			{
 				my ( undef, $file ) = @_;
 
-				my $builder = Test::More -> builder();
-
-				# reset the Test::Builder object for every "file"
-				$builder -> reset();
-#				$builder -> { 'Indent' } = ''; # may not be needed
-
-				# collect the output into $out
-				$builder -> output( \( my $out = '' ) );     # STDOUT
-				$builder -> failure_output( \$out ); # STDERR
-				$builder -> todo_output( \$out );    # STDOUT
-
-				# run the test
-				run( $file );
-
-				# the output ( needs at least one newline )
-				return $out;
+				return [
+					@cmd,
+					sprintf( q|run q{%s}|, $file ),
+				];
 			}
 		} )
 		-> runtests( @a )
