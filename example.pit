@@ -1,5 +1,5 @@
 
-plan( let $tests = 3; );
+plan( let $tests = 4; );
 
 open( let $url = "http://www.drweb.com/"; let $params = hash ( "lng" => "en"; ); );
 
@@ -14,4 +14,6 @@ submit_form(
 );
 
 content_like( let $re = "search" );
+
+content().find_elements( let $q = "form" ).get( let $idx = 0 ).find_elements( let $q = E( let $str = "input[value=\"something\"]" ) ).get(let $idx=0).value_should_be( let $str = "something" );
 

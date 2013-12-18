@@ -140,5 +140,15 @@ sub content_ilike
 	} );
 }
 
+sub content
+{
+	return Dorq::code::block::builtin -> new( \sub
+	{
+		my $o = &Dorq::internals::mech();
+
+		return PIT::content -> new( \( my $dummy = $o -> content() ) );
+	} );
+}
+
 -1;
 

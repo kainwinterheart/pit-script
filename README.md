@@ -10,8 +10,10 @@ Prerequisites
 + [URI](https://metacpan.org/release/URI)
 + [File::Spec](https://metacpan.org/release/PathTools)
 + [Test::More](https://metacpan.org/release/Test-Simple)
++ [HTML::Query](https://metacpan.org/release/HTML-Query)
 + [TAP::Harness](https://metacpan.org/release/Test-Harness)
 + [WWW::Mechanize](https://metacpan.org/release/WWW-Mechanize)
++ [HTML::TreeBuilder](https://metacpan.org/release/HTML-Tree)
 
 How to run tests
 ----------------
@@ -24,6 +26,26 @@ How to run tests
 Syntax
 ------
 
+### Content object
+
+#### Methods
+
+##### find_elements( let $q = "#some.css[selector]" )
+
+Returns an array of element objects.
+
+### Element object
+
+#### Methods
+
+##### find_elements( let $q = "#some.css[selector]" )
+
+Returns an array of element objects.
+
+##### value_should_be( let $str = "some value" )
+
+Tests element's value.
+
 ### Builtin functions
 
 	plan( let $tests = 3 ); # define number of tests to be run
@@ -34,4 +56,5 @@ Syntax
 	content_like( let $re = "some text followed by [0-9]+" )
 	content_ilike( let $re = "SoMe TeXt FoLlOweD bY [0-9]+" ) # some as above, but case insensitive
 	subtest( let $name = "subtest name"; let $code = lambda ( ... ) ) # run a subtest
+	content() # return content object
 
