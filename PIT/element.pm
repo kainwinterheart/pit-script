@@ -81,7 +81,7 @@ sub value_should_be
 
 	&Test::More::is( &Dorq::internals::du( ${ $self -> { 'object' } } -> { 'value' } ), &Dorq::internals::du( $str ), sprintf( 'value of %s matches %s', &Dorq::internals::eu( $self -> selector() ), &Dorq::internals::eu( $str ) ) );
 
-	return Dorq::type::undef -> new( \( my $dummy = undef ) );
+	return Dorq::type::undef -> new( \( my $dummy2 = undef ) );
 }
 
 -1;
